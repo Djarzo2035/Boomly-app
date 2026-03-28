@@ -42,64 +42,48 @@
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
-  <!-- 1. Chargement du SDK officiel Pi (obligatoire) -->
-<script src="t.co/7aLbtNqraS"></script>
+</script>
+  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
 
-<!-- 2. Initialisation du SDK (à mettre juste après le script ci-dessus) -->
 <script>
-    Pi.init({ version: "2.0" });   // ou "2.0" avec sandbox: true pour test
+    Pi.init({ 
+        version: "2.0",
+        sandbox: true   // Important pour les tests de validation
+    });
+
+    async function testPayment() {
+        if (typeof Pi === 'undefined') {
+            alert("Ouvre cette page dans le Pi Browser !");
+            return;
+        }
+
+        const paymentData = {
+            amount: 0.5,
+            memo: "Test validation Developer Portal",
+            metadata: { test: true, purpose: "setup" }
+        };
+
+        const callbacks = {
+            onReadyForServerApproval: (paymentId) => console.log("Approval:", paymentId),
+            onReadyForServerCompletion: (paymentId, txid) => {
+                console.log("Succès TxID:", txid);
+                alert("✅ Transaction réussie !\nRetourne dans le Developer Portal.");
+            },
+            onCancel: () => alert("Annulé"),
+            onError: (error) => alert("Erreur: " + (error.message || error))
+        };
+
+        try {
+            await Pi.createPayment(paymentData, callbacks);
+        } catch (e) {
+            alert("Impossible de lancer : " + e);
+        }
+    }
 </script>
 
-<!-- 3. Ton bouton visible dans l'app -->
-<button onclick="makeTestPayment()" style="padding: 15px 25px; font-size: 18px; background: #4a90e2; color: white; border: none; border-radius: 8px; cursor: pointer;">
-    Tester un paiement Pi (1 Pi)
+<button onclick="testPayment()" style="padding:18px 32px; font-size:18px; background:#4a90e2; color:white; border:none; border-radius:10px; display:block; margin:30px auto; cursor:pointer;">
+    Lancer Test Paiement Pi (0.5 Pi)
 </button>
-
-<!-- 4. Le code JavaScript de la transaction -->
-<script>
-async function makeTestPayment() {
-    if (typeof Pi === 'undefined') {
-        alert("❌ Ouvre cette page dans le Pi Browser !");
-        return;
-    }
-
-    const paymentData = {
-        amount: 1.0,                          // Change en 0.1 ou 0.5 si tu veux tester plus petit
-        memo: "Test validation Developer Portal",
-        metadata: {
-            test: true,
-            purpose: "developer_setup_validation",
-            app_version: "1.0"
-        }
-    };
-
-    const callbacks = {
-        onReadyForServerApproval: (paymentId) => {
-            console.log("✅ Paiement prêt pour approbation - ID :", paymentId);
-            // Si tu as un backend, envoie paymentId ici
-        },
-        onReadyForServerCompletion: (paymentId, txid) => {
-            console.log("🎉 Paiement terminé avec succès ! TxID :", txid);
-            alert("Transaction réussie !\n\nRetourne maintenant dans le Developer Portal.\nL'étape devrait passer en Completed.");
-        },
-        onCancel: (paymentId) => {
-            console.log("⛔ Paiement annulé");
-            alert("Paiement annulé par l'utilisateur.");
-        },
-        onError: (error) => {
-            console.error("❌ Erreur :", error);
-            alert("Erreur lors du paiement : " + (error.message || error));
-        }
-    };
-
-    try {
-        await Pi.createPayment(paymentData, callbacks);
-    } catch (err) {
-        console.error(err);
-        alert("Impossible de lancer le paiement. Vérifie que tu es dans le Pi Browser.");
-    }
-}
-</script>
   body {
     font-family: var(--font-body);
     background: var(--bg);
